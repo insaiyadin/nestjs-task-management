@@ -2,10 +2,15 @@ import { ConflictException, Injectable, InternalServerErrorException, Unauthoriz
 import { PrismaService } from 'src/prisma.service';
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
 import * as bcrypt from 'bcrypt'
+import { JwtService } from '@nestjs/jwt';
+import { JwtPayload } from './jwt-payload.interface';
 
 @Injectable()
 export class AuthService {
-    constructor(private prisma: PrismaService) {}
+    constructor(
+        private prisma: PrismaService,
+        private jwtService: JwtService    
+    ) {}
 
     async createUser(authCredentialsDto: AuthCredentialsDto): Promise<void> {
         const { username, password } = authCredentialsDto;
@@ -29,7 +34,7 @@ export class AuthService {
         }
     }
 
-    async loginUser(authCredentials: AuthCredentialsDto): Promise<string> {
+    async loginUser(authCredentials: AuthCredentialsDto): Promise<{ accessToken: string }> {
         const { username, password } = authCredentials;
         const user = await this.prisma.user.findUnique({
             where: {
@@ -38,7 +43,10 @@ export class AuthService {
         })
 
         if (user && await bcrypt.compare(password, user.password)) {
-            return 'success'
+            // return 'success'
+            const payload: JwtPayload = { username };
+            const accessToken: string = await this.jwtService.sign(payload);
+            return { accessToken };
         } else {
             throw new UnauthorizedException()
         }
