@@ -13,9 +13,6 @@ export class AuthService {
         const salt = await bcrypt.genSalt()
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        console.log('salt', salt);
-        console.log('password', hashedPassword);
-
         try {
             const newUser = await this.prisma.user.create({
                 data: {
