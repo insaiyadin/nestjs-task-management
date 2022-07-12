@@ -1,1 +1,1 @@
-Simple app made with NestJS & Prisma
+Simple app made with NestJS, Prisma & PostgreSQL
