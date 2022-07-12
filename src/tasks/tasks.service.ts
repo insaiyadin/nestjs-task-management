@@ -3,14 +3,14 @@ import { CreateTaskDto } from './dto/create-task.dto';
 import { GetTasksFilterDto } from './dto/get-tasks-filter.dto';
 
 import { PrismaService } from '../prisma.service';
-import { Task, TaskStatus } from '@prisma/client'
+import { Task, TaskStatus, User } from '@prisma/client'
 
 
 @Injectable()
 export class TasksService {
     constructor(private prisma: PrismaService) {}
     
-    async getTasks(filterDto: GetTasksFilterDto): Promise<Task[]> {
+    async getTasks(filterDto: GetTasksFilterDto, user: User): Promise<Task[]> {
         const { status, search } = filterDto;
         
         let filterConditions;
@@ -21,20 +21,29 @@ export class TasksService {
                     {
                         status: status ? status : undefined,
                         title: {
-                            contains: search
-                        }
+                            contains: search,
+                            mode: 'insensitive'
+                        },
+                        userId: user.id
                     }, 
                     {
                         status: status ? status : undefined,
                         description: {
-                            contains: search
-                        }
+                            contains: search,
+                            mode: 'insensitive'
+                        },
+                        userId: user.id
                     }
                 ]
             }
         } else if (status) {
             filterConditions = {
-                status: status
+                status: status,
+                userId: user.id
+            }
+        } else {
+            filterConditions = {
+                userId: user.id
             }
         }
 
@@ -45,24 +54,26 @@ export class TasksService {
         return tasks;
     }
 
-    async createTask(createTaskDto: CreateTaskDto): Promise<Task> {
+    async createTask(createTaskDto: CreateTaskDto, user: User): Promise<Task> {
         const { title, description } = createTaskDto;
 
         const newTask: Task = await this.prisma.task.create({
             data: {
                 title: title,
                 description: description,
-                status: TaskStatus.OPEN
+                status: TaskStatus.OPEN,
+                userId: user.id
             }
         })
 
         return newTask;
     }
 
-    async getTaskById(id: string): Promise<Task> {
-        const found = await this.prisma.task.findUnique({
+    async getTaskById(id: string, user: User): Promise<Task> {
+        const found = await this.prisma.task.findFirst({
             where: {
-                id: id
+                id: id,
+                userId: user.id
             }
         });
         if (!found) {
@@ -72,31 +83,31 @@ export class TasksService {
         return found;
     }
 
-    async deleteTaskById(id: string): Promise<Task> {
-        try {
-            return await this.prisma.task.delete({
-                where: {
-                    id: id
-                }
-            })
-        } catch(err) {
-            throw new NotFoundException();
-        }
+    async deleteTaskById(id: string, user: User): Promise<Task> {
+        const task = await this.getTaskById(id, user);
+        const deleted = await this.prisma.task.delete({
+            where: {
+                id: id,
+            }
+        })
+
+        return deleted;
     }
 
-    async updateTaskStatus(id: string, status: TaskStatus): Promise<Task> {
+    async updateTaskStatus(id: string, status: TaskStatus, user: User): Promise<Task> {
+        const task = await this.getTaskById(id, user);
+
         try {
-            const updateTask = await this.prisma.task.update({
+            const updatedTask = await this.prisma.task.update({
                 where: {
                     id: id
                 }, data: {
                     status: status
                 }
             })
-            return updateTask;
+            return updatedTask;
         } catch (err) {
             throw new NotFoundException()
         }
-        
     }
 }

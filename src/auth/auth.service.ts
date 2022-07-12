@@ -27,7 +27,7 @@ export class AuthService {
             })
         } catch (err) {
             if (err.code === 'P2002') {
-                throw new ConflictException('This user already exists');
+                throw new ConflictException('This username already exists');
             } else {
                 throw new InternalServerErrorException();
             }
@@ -43,7 +43,6 @@ export class AuthService {
         })
 
         if (user && await bcrypt.compare(password, user.password)) {
-            // return 'success'
             const payload: JwtPayload = { username };
             const accessToken: string = await this.jwtService.sign(payload);
             return { accessToken };

@@ -7,6 +7,7 @@ CREATE TABLE "Task" (
     "title" TEXT NOT NULL,
     "description" TEXT NOT NULL,
     "status" "TaskStatus" NOT NULL,
+    "userId" TEXT NOT NULL,
 
     CONSTRAINT "Task_pkey" PRIMARY KEY ("id")
 );
@@ -22,3 +23,6 @@ CREATE TABLE "User" (
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_username_key" ON "User"("username");
+
+-- AddForeignKey
+ALTER TABLE "Task" ADD CONSTRAINT "Task_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
