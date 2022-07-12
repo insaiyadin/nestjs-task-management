@@ -12,7 +12,7 @@ export class TasksService {
     
     async getTasks(filterDto: GetTasksFilterDto, user: User): Promise<Task[]> {
         const { status, search } = filterDto;
-        
+
         let filterConditions;
 
         if (search) {
